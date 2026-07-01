@@ -1,0 +1,5 @@
+# managed-by=mohavise-adblock-core
+# purpose=custom-blocklist
+#
+# Add your own domains here, one per line.
+

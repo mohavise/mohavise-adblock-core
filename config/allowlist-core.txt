@@ -1,0 +1,87 @@
+# managed-by=mohavise-adblock-core
+# purpose=core-allowlist
+#
+# Add domains here that must never be blocked.
+# Keep this list focused on login, payment, software update, CDN, and critical app domains.
+
+# GitHub / repository downloads
+github.com
+raw.githubusercontent.com
+githubusercontent.com
+githubassets.com
+
+# Google / Android / YouTube login
+google.com
+accounts.google.com
+gstatic.com
+googleapis.com
+youtube.com
+ytimg.com
+
+# Microsoft / Windows / Office / Xbox
+microsoft.com
+login.microsoftonline.com
+live.com
+office.com
+office365.com
+windowsupdate.com
+microsoftonline.com
+msauth.net
+msftauth.net
+xboxlive.com
+
+# Apple / iCloud
+apple.com
+icloud.com
+cdn-apple.com
+mzstatic.com
+itunes.apple.com
+
+# Authentication providers
+auth0.com
+okta.com
+oktacdn.com
+duosecurity.com
+onelogin.com
+pingidentity.com
+accounts.firefox.com
+
+# Cloudflare / CDN essentials
+cloudflare.com
+cloudflare-dns.com
+cdnjs.cloudflare.com
+
+# Payments
+paypal.com
+paypalobjects.com
+stripe.com
+stripe.network
+visa.com
+mastercard.com
+
+# Communication / common services
+whatsapp.com
+whatsapp.net
+telegram.org
+t.me
+discord.com
+discordapp.com
+zoom.us
+slack.com
+skype.com
+
+# Popular web/services
+amazon.com
+aws.amazon.com
+amazonaws.com
+netflix.com
+spotify.com
+instagram.com
+facebook.com
+fbcdn.net
+x.com
+linkedin.com
+reddit.com
+wikipedia.org
+yahoo.com
+
