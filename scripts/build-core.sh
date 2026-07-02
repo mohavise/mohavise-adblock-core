@@ -69,7 +69,8 @@ awk '
         domain = $0
         blocked = 0
         for (allowed in allow) {
-            if (domain == allowed || domain ~ ("\\." allowed "$")) {
+            suffix = "." allowed
+            if (domain == allowed || substr(domain, length(domain) - length(suffix) + 1) == suffix) {
                 blocked = 1
                 break
             }
@@ -86,4 +87,3 @@ fi
 
 cp "$TMP_DIR/final.txt" "$DOMAIN_OUTPUT_FILE"
 echo "Generated $DOMAIN_OUTPUT_FILE with $domain_count blocked domains."
-
