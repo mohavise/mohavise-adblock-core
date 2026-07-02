@@ -22,6 +22,12 @@ GitHub Actions runs at `23:30 UTC`, which is `03:00 Asia/Tehran`.
 | `config/allowlist-core.txt` | Domains that must not be blocked |
 | `config/blocklist-custom.txt` | Your own blocked domains |
 
+## Build
+
+```bash
+./scripts/build-core.sh
+```
+
 ## Downstream Repos
 
 These repos should use `core-domains.txt` as their source:
