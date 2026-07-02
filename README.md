@@ -13,7 +13,6 @@ GitHub Actions runs at `23:30 UTC`, which is `03:00 Asia/Tehran`.
 | File | Purpose |
 | --- | --- |
 | `core-domains.txt` | Canonical clean domain list, one domain per line |
-| `core-hosts.txt` | Canonical hosts-format list |
 
 ## Config
 

@@ -2,8 +2,7 @@ param(
     [string]$SourcesFile = "..\config\sources.txt",
     [string]$AllowlistFile = "..\config\allowlist-core.txt",
     [string]$CustomBlocklistFile = "..\config\blocklist-custom.txt",
-    [string]$DomainOutputFile = "..\core-domains.txt",
-    [string]$HostOutputFile = "..\core-hosts.txt"
+    [string]$DomainOutputFile = "..\core-domains.txt"
 )
 
 $ErrorActionPreference = "Stop"
@@ -94,7 +93,6 @@ $final = $blocks |
     Sort-Object
 
 Set-Content -LiteralPath $DomainOutputFile -Value $final -Encoding ASCII
-Set-Content -LiteralPath $HostOutputFile -Value ($final | ForEach-Object { "0.0.0.0 $_" }) -Encoding ASCII
 
-Write-Host "Generated $DomainOutputFile and $HostOutputFile with $($final.Count) blocked domains."
+Write-Host "Generated $DomainOutputFile with $($final.Count) blocked domains."
 
