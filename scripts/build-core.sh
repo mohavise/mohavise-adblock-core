@@ -31,15 +31,34 @@ normalize_domains() {
     '
 }
 
+download_source() {
+    source_url="$1"
+
+    curl \
+        --fail \
+        --silent \
+        --show-error \
+        --location \
+        --retry 5 \
+        --retry-all-errors \
+        --retry-delay 10 \
+        --connect-timeout 20 \
+        --max-time 120 \
+        --user-agent "mohavise-adblock-core/1.0" \
+        "$source_url"
+}
+
 source_count=0
 success_count=0
+: > "$TMP_DIR/blocks.raw"
+
 while IFS= read -r source_url || [[ -n "$source_url" ]]; do
     source_url="${source_url#"${source_url%%[![:space:]]*}"}"
     source_url="${source_url%"${source_url##*[![:space:]]}"}"
     [[ -z "$source_url" || "$source_url" == \#* ]] && continue
 
     source_count=$((source_count + 1))
-    if curl -fsSL "$source_url" | normalize_domains >> "$TMP_DIR/blocks.raw"; then
+    if download_source "$source_url" | normalize_domains >> "$TMP_DIR/blocks.raw"; then
         success_count=$((success_count + 1))
     else
         echo "Warning: failed to download $source_url" >&2
@@ -52,7 +71,12 @@ if (( source_count == 0 )); then
 fi
 
 if (( success_count == 0 )); then
-    echo "All source downloads failed; refusing to overwrite $DOMAIN_OUTPUT_FILE" >&2
+    if [[ -s "$DOMAIN_OUTPUT_FILE" ]]; then
+        echo "Warning: all source downloads failed; keeping existing $DOMAIN_OUTPUT_FILE" >&2
+        exit 0
+    fi
+
+    echo "All source downloads failed and no existing output is available; refusing to create $DOMAIN_OUTPUT_FILE" >&2
     exit 1
 fi
 
