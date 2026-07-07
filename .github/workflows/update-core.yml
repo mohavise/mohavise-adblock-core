@@ -17,17 +17,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build core lists
+      - name: Build core list
         run: bash ./scripts/build-core.sh
 
-      - name: Commit updated core lists
+      - name: Commit updated core list
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add core-adblock-domains.txt core-adult-domains.txt
+          git add core-adblock-domains.txt
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
-          git commit -m "Update adblock core lists"
+          git commit -m "Update adblock core list"
           git push
