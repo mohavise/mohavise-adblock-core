@@ -4,11 +4,17 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 
+ADBLOCK_SOURCES_FILE="${ADBLOCK_SOURCES_FILE:-$REPO_DIR/config/sources-adblock.txt}"
+ADULT_SOURCES_FILE="${ADULT_SOURCES_FILE:-$REPO_DIR/config/sources-adult.txt}"
 SOURCES_FILE="${SOURCES_FILE:-$REPO_DIR/config/sources.txt}"
 ALLOWLIST_FILE="${ALLOWLIST_FILE:-$REPO_DIR/config/allowlist-core.txt}"
 CUSTOM_BLOCKLIST_FILE="${CUSTOM_BLOCKLIST_FILE:-$REPO_DIR/config/blocklist-custom.txt}"
+ADBLOCK_OUTPUT_FILE="${ADBLOCK_OUTPUT_FILE:-$REPO_DIR/core-adblock-domains.txt}"
+ADULT_OUTPUT_FILE="${ADULT_OUTPUT_FILE:-$REPO_DIR/core-adult-domains.txt}"
 DOMAIN_OUTPUT_FILE="${DOMAIN_OUTPUT_FILE:-$REPO_DIR/core-domains.txt}"
 MIN_DOMAIN_COUNT="${MIN_DOMAIN_COUNT:-10000}"
+MIN_ADBLOCK_DOMAIN_COUNT="${MIN_ADBLOCK_DOMAIN_COUNT:-10000}"
+MIN_ADULT_DOMAIN_COUNT="${MIN_ADULT_DOMAIN_COUNT:-1000}"
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
@@ -92,66 +98,111 @@ download_source() {
         "$source_url"
 }
 
-source_count=0
-success_count=0
-: > "$TMP_DIR/blocks.raw"
+build_category_raw() {
+    local sources_file="$1"
+    local output_raw_file="$2"
+    local category_name="$3"
+    local source_count=0
+    local success_count=0
 
-while IFS= read -r source_url || [[ -n "$source_url" ]]; do
-    source_url="${source_url#"${source_url%%[![:space:]]*}"}"
-    source_url="${source_url%"${source_url##*[![:space:]]}"}"
-    [[ -z "$source_url" || "$source_url" == \#* ]] && continue
+    : > "$output_raw_file"
 
-    source_count=$((source_count + 1))
-    if download_source "$source_url" | normalize_domains >> "$TMP_DIR/blocks.raw"; then
-        success_count=$((success_count + 1))
-    else
-        echo "Warning: failed to download $source_url" >&2
+    while IFS= read -r source_url || [[ -n "$source_url" ]]; do
+        source_url="${source_url#"${source_url%%[![:space:]]*}"}"
+        source_url="${source_url%"${source_url##*[![:space:]]}"}"
+        [[ -z "$source_url" || "$source_url" == \#* ]] && continue
+
+        source_count=$((source_count + 1))
+        if download_source "$source_url" | normalize_domains >> "$output_raw_file"; then
+            success_count=$((success_count + 1))
+        else
+            echo "Warning: failed to download $category_name source: $source_url" >&2
+        fi
+    done < "$sources_file"
+
+    if (( source_count == 0 )); then
+        echo "No $category_name source URLs found in $sources_file" >&2
+        exit 1
     fi
-done < "$SOURCES_FILE"
 
-if (( source_count == 0 )); then
-    echo "No source URLs found in $SOURCES_FILE" >&2
-    exit 1
-fi
-
-if (( success_count == 0 )); then
-    if [[ -s "$DOMAIN_OUTPUT_FILE" ]]; then
-        echo "Warning: all source downloads failed; keeping existing $DOMAIN_OUTPUT_FILE" >&2
-        exit 0
+    if (( success_count == 0 )); then
+        echo "All $category_name source downloads failed" >&2
+        exit 1
     fi
+}
 
-    echo "All source downloads failed and no existing output is available; refusing to create $DOMAIN_OUTPUT_FILE" >&2
-    exit 1
-fi
+apply_allowlist() {
+    local input_file="$1"
+    local output_file="$2"
 
-normalize_domains < "$CUSTOM_BLOCKLIST_FILE" >> "$TMP_DIR/blocks.raw"
-normalize_domains < "$ALLOWLIST_FILE" | sort -u > "$TMP_DIR/allow.txt"
-sort -u "$TMP_DIR/blocks.raw" > "$TMP_DIR/blocks.txt"
-
-awk '
-    NR == FNR {
-        allow[$0] = 1
-        next
-    }
-    {
-        domain = $0
-        blocked = 0
-        for (allowed in allow) {
-            suffix = "." allowed
-            if (domain == allowed || substr(domain, length(domain) - length(suffix) + 1) == suffix) {
-                blocked = 1
-                break
-            }
+    awk '
+        NR == FNR {
+            allow[$0] = 1
+            next
         }
-        if (!blocked) print domain
-    }
-' "$TMP_DIR/allow.txt" "$TMP_DIR/blocks.txt" > "$TMP_DIR/final.txt"
+        {
+            domain = $0
+            blocked = 0
+            for (allowed in allow) {
+                suffix = "." allowed
+                if (domain == allowed || substr(domain, length(domain) - length(suffix) + 1) == suffix) {
+                    blocked = 1
+                    break
+                }
+            }
+            if (!blocked) print domain
+        }
+    ' "$TMP_DIR/allow.txt" "$input_file" > "$output_file"
+}
 
-domain_count="$(wc -l < "$TMP_DIR/final.txt" | tr -d ' ')"
-if (( domain_count < MIN_DOMAIN_COUNT )); then
-    echo "Final domain count $domain_count is below minimum $MIN_DOMAIN_COUNT; refusing to overwrite $DOMAIN_OUTPUT_FILE" >&2
-    exit 1
+validate_min_count() {
+    local file="$1"
+    local minimum="$2"
+    local label="$3"
+    local count
+
+    count="$(wc -l < "$file" | tr -d ' ')"
+    if (( count < minimum )); then
+        echo "$label domain count $count is below minimum $minimum; refusing to overwrite outputs" >&2
+        exit 1
+    fi
+
+    echo "$count"
+}
+
+if [[ -f "$ADBLOCK_SOURCES_FILE" ]]; then
+    build_category_raw "$ADBLOCK_SOURCES_FILE" "$TMP_DIR/adblock.raw" "adblock"
+else
+    echo "Warning: $ADBLOCK_SOURCES_FILE not found; using compatibility sources file $SOURCES_FILE" >&2
+    build_category_raw "$SOURCES_FILE" "$TMP_DIR/adblock.raw" "adblock"
 fi
 
-cp "$TMP_DIR/final.txt" "$DOMAIN_OUTPUT_FILE"
-echo "Generated $DOMAIN_OUTPUT_FILE with $domain_count blocked domains."
+if [[ -f "$ADULT_SOURCES_FILE" ]]; then
+    build_category_raw "$ADULT_SOURCES_FILE" "$TMP_DIR/adult.raw" "adult"
+else
+    echo "Warning: $ADULT_SOURCES_FILE not found; creating empty adult category" >&2
+    : > "$TMP_DIR/adult.raw"
+fi
+
+normalize_domains < "$CUSTOM_BLOCKLIST_FILE" >> "$TMP_DIR/adblock.raw"
+normalize_domains < "$ALLOWLIST_FILE" | sort -u > "$TMP_DIR/allow.txt"
+
+sort -u "$TMP_DIR/adblock.raw" > "$TMP_DIR/adblock.blocks.txt"
+sort -u "$TMP_DIR/adult.raw" > "$TMP_DIR/adult.blocks.txt"
+cat "$TMP_DIR/adblock.blocks.txt" "$TMP_DIR/adult.blocks.txt" | sort -u > "$TMP_DIR/combined.blocks.txt"
+
+apply_allowlist "$TMP_DIR/adblock.blocks.txt" "$TMP_DIR/adblock.final.txt"
+apply_allowlist "$TMP_DIR/adult.blocks.txt" "$TMP_DIR/adult.final.txt"
+apply_allowlist "$TMP_DIR/combined.blocks.txt" "$TMP_DIR/combined.final.txt"
+
+adblock_count="$(validate_min_count "$TMP_DIR/adblock.final.txt" "$MIN_ADBLOCK_DOMAIN_COUNT" "Adblock")"
+adult_count="$(validate_min_count "$TMP_DIR/adult.final.txt" "$MIN_ADULT_DOMAIN_COUNT" "Adult")"
+combined_count="$(validate_min_count "$TMP_DIR/combined.final.txt" "$MIN_DOMAIN_COUNT" "Combined")"
+
+cp "$TMP_DIR/adblock.final.txt" "$ADBLOCK_OUTPUT_FILE"
+cp "$TMP_DIR/adult.final.txt" "$ADULT_OUTPUT_FILE"
+cp "$TMP_DIR/combined.final.txt" "$DOMAIN_OUTPUT_FILE"
+
+echo "Generated $ADBLOCK_OUTPUT_FILE with $adblock_count blocked domains."
+echo "Generated $ADULT_OUTPUT_FILE with $adult_count blocked domains."
+echo "Generated $DOMAIN_OUTPUT_FILE with $combined_count blocked domains."
