@@ -6,4 +6,4 @@
 https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt
 
 # Adult/NSFW sources
-https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/nsfw.txt
+https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts
