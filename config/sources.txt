@@ -1,9 +1,0 @@
-# managed-by=mohavise-adblock-core
-# purpose=upstream-combined-sources
-# note=kept for compatibility; build-core.sh uses category source files and publishes combined output
-
-# Adblock sources
-https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt
-
-# Adult/NSFW sources
-https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts
