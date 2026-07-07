@@ -16,17 +16,61 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 normalize_domains() {
     awk '
         BEGIN { IGNORECASE = 1 }
+
+        function is_valid_domain(domain, labels, label_count, i, label, tld) {
+            if (domain == "") return 0
+            if (length(domain) > 253) return 0
+            if (domain ~ /[[:space:]]/) return 0
+            if (domain ~ /\.\./) return 0
+            if (domain ~ /^\./ || domain ~ /\.$/) return 0
+            if (domain ~ /^[0-9]+(\.[0-9]+){3}$/) return 0
+            if (domain !~ /^[a-z0-9.-]+$/) return 0
+
+            label_count = split(domain, labels, ".")
+            if (label_count < 2) return 0
+
+            for (i = 1; i <= label_count; i++) {
+                label = labels[i]
+                if (label == "") return 0
+                if (length(label) > 63) return 0
+                if (label ~ /^-/ || label ~ /-$/) return 0
+                if (label !~ /^[a-z0-9-]+$/) return 0
+            }
+
+            tld = labels[label_count]
+            if (length(tld) < 2 || length(tld) > 63) return 0
+            if (tld !~ /^[a-z]+$/) return 0
+
+            return 1
+        }
+
         {
             line = tolower($0)
+            gsub(/\r/, "", line)
             gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
-            if (line == "" || line ~ /^#/) next
-            sub(/^\|\|/, "", line)
-            sub(/\^$/, "", line)
+
+            if (line == "") next
+            if (line ~ /^#/) next
+            if (line ~ /^!/) next
+            if (line ~ /^@@/) next
+            if (line ~ /^\[/) next
+            if (line ~ /^\//) next
+
             sub(/^0\.0\.0\.0[[:space:]]+/, "", line)
             sub(/^127\.0\.0\.1[[:space:]]+/, "", line)
+            sub(/^::[[:space:]]+/, "", line)
             sub(/^address=\//, "", line)
+            sub(/^server=\//, "", line)
+            sub(/^local=\//, "", line)
+            sub(/^\|\|/, "", line)
+            sub(/^\*\./, "", line)
+
+            sub(/[\^$].*$/, "", line)
             sub(/\/.*$/, "", line)
-            if (line ~ /^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/) print line
+            sub(/[[:space:]].*$/, "", line)
+            sub(/\.$/, "", line)
+
+            if (is_valid_domain(line)) print line
         }
     '
 }
