@@ -1,7 +1,6 @@
 # managed-by=mohavise-adblock-core
 # purpose=upstream-block-sources
 
-# HaGeZi Light - conservative first source.
-# You can later switch this to multi.txt or pro.txt for stronger blocking.
-https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/light.txt
-
+# AdGuard DNS Filter - official and reliable DNS-level ad/tracker blocking source.
+# Maintained by AdGuard and simplified for DNS-level blocking.
+https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt
