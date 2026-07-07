@@ -1,0 +1,6 @@
+# managed-by=mohavise-adblock-core
+# purpose=upstream-adblock-sources
+
+# AdGuard DNS Filter - official and reliable DNS-level ad/tracker blocking source.
+# Maintained by AdGuard and simplified for DNS-level blocking.
+https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt
