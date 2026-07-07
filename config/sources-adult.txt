@@ -1,6 +1,6 @@
 # managed-by=mohavise-adblock-core
 # purpose=upstream-adult-sources
 
-# HaGeZi NSFW - dedicated adult-content DNS blocklist.
-# Used to prevent adult domains from resolving at DNS level.
-https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/nsfw.txt
+# StevenBlack porn-only hosts - adult-domain blocking source.
+# This is an adult-only generated hosts file, not the combined porn variant.
+https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts
