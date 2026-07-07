@@ -1,0 +1,6 @@
+# managed-by=mohavise-adblock-core
+# purpose=upstream-adult-sources
+
+# StevenBlack porn-only hosts - adult-domain blocking source.
+# This is an adult-only generated hosts file, not the combined porn variant.
+https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts
