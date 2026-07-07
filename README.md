@@ -97,3 +97,9 @@ adblock sources + custom blocklist - allowlist = core-adblock-domains.txt
 adult sources - allowlist                     = core-adult-domains.txt
 adblock + adult - allowlist                   = core-domains.txt
 ```
+
+## Cleanup Policy
+
+Before removing any file from this repository, read `CLEANUP_POLICY.md`.
+
+Generated outputs, compatibility files, fallback source files, workflows, and scripts are intentional parts of the process. Do not delete them only because they look duplicated, old, or generated.
