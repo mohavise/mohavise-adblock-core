@@ -1,32 +1,41 @@
 # Mohavise Adblock Core
 
-Parent repository for the Mohavise adblock system.
+This is the parent/core repository for the Mohavise adblock system.
 
-It builds one clean domain list for the child repositories.
+It downloads upstream blocklists, normalizes and validates domains, applies the allowlist, removes duplicates, and publishes clean canonical domain lists for child repos to consume.
 
-## Timing
+## Daily Timing
 
-Core workflow: `23:30 UTC`.
-Child workflows: `00:00 UTC`.
+GitHub Actions runs at `23:30 UTC`, which is `03:00 Asia/Tehran`.
 
-## Output
+Child repos run later at `00:00 UTC`, which is `03:30 Asia/Tehran`.
 
-```text
-core-adblock-domains.txt
-```
+## Outputs
 
-Raw URL:
+| File | Purpose |
+| --- | --- |
+| `core-adblock-domains.txt` | Valid ad/tracker blocking domains only |
+| `core-adult-domains.txt` | Valid adult/NSFW blocking domains only |
+| `core-domains.txt` | Combined valid canonical list used by child repos |
 
-```text
-https://raw.githubusercontent.com/mohavise/mohavise-adblock-core/main/core-adblock-domains.txt
-```
+Default downstream repos should use `core-domains.txt` unless they need category-specific output.
 
 ## Config
 
+| File | Purpose |
+| --- | --- |
+| `config/sources-adblock.txt` | Upstream ad/tracker source URLs |
+| `config/sources-adult.txt` | Upstream adult/NSFW source URLs |
+| `config/sources.txt` | Compatibility combined source list |
+| `config/allowlist-core.txt` | Domains that must not be blocked |
+| `config/blocklist-custom.txt` | Your own custom blocked domains |
+
+## Source Strategy
+
 ```text
-config/sources-adblock.txt
-config/allowlist-core.txt
-config/blocklist-custom.txt
+AdGuard DNS Filter  → core-adblock-domains.txt
+HaGeZi NSFW         → core-adult-domains.txt
+Both together       → core-domains.txt
 ```
 
 ## Build
@@ -35,10 +44,56 @@ config/blocklist-custom.txt
 ./scripts/build-core.sh
 ```
 
-## Child repos
+## Downstream Repos
+
+These repos should use `core-domains.txt` as their default source:
 
 ```text
 mohavise-mikrotik-adblock
 mohavise-pihole-adlist
 mohavise-fortigate-adblock
+```
+
+Core raw URLs:
+
+```text
+https://raw.githubusercontent.com/mohavise/mohavise-adblock-core/main/core-domains.txt
+https://raw.githubusercontent.com/mohavise/mohavise-adblock-core/main/core-adblock-domains.txt
+https://raw.githubusercontent.com/mohavise/mohavise-adblock-core/main/core-adult-domains.txt
+```
+
+## Validation
+
+The build script validates domain lines before publishing outputs.
+
+It rejects invalid or unsafe entries such as comments, exception rules, regex rules, IP-only lines, spaces, double dots, invalid labels, overlong labels, and bad TLDs.
+
+## Update-Ready Approach
+
+```text
+Parent/core repo validates and publishes canonical lists.
+Category outputs stay separated for future control.
+Combined output feeds child repos by default.
+Child repos convert the combined list into platform-ready outputs.
+Managed outputs are rebuilt by GitHub Actions on schedule.
+```
+
+## Future Vision
+
+```text
+One clean parent system.
+Separate category outputs.
+One combined default output.
+Multiple child platform outputs.
+Same timing strategy.
+Safe daily updates.
+Easy rollback and future category expansion.
+```
+
+## Logic
+
+```text
+adblock sources + custom blocklist - allowlist = core-adblock-domains.txt
+adult sources - allowlist                     = core-adult-domains.txt
+adblock + adult - allowlist                   = core-domains.txt
 ```
